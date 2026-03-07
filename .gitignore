@@ -1,5 +1,7 @@
 # ---- Backend (Maven) ----
 backend/target/
+/target/
+/src/
 *.class
 *.jar
 
