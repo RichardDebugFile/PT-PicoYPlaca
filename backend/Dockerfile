@@ -28,4 +28,7 @@ ENTRYPOINT ["java", \
   "-Djava.security.egd=file:/dev/./urandom", \
   "-Dspring.profiles.active=prod", \
   "-Duser.timezone=America/Guayaquil", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-XX:+ExitOnOutOfMemoryError", \
   "-jar", "app.jar"]
