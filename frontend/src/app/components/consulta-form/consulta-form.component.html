@@ -1,0 +1,96 @@
+<div class="form-card">
+  <div class="form-header">
+    <mat-icon class="header-icon">directions_car</mat-icon>
+    <h2>Consulta Pico y Placa</h2>
+    <p class="subtitle">Distrito Metropolitano de Quito &mdash; AMT Res. AQ-013-2023</p>
+    <p class="scope-note">
+      <mat-icon style="font-size:14px;vertical-align:middle;margin-right:4px">info_outline</mat-icon>
+      Esta herramienta aplica <strong>solo al DMQ (Quito)</strong>. Guayaquil, Cuenca y otras ciudades tienen normativas distintas.
+    </p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="consultar()" novalidate>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Placa del vehículo</mat-label>
+      <mat-icon matPrefix>badge</mat-icon>
+      <input
+        matInput
+        formControlName="placa"
+        placeholder="Ej: ABC-1234"
+        maxlength="8"
+        autocomplete="off"
+        inputmode="text"
+        (input)="onPlacaInput($event)"
+      />
+      <mat-hint>3 letras + guión + 3 o 4 dígitos &mdash; Ej: ABC-1234 o ABC-123</mat-hint>
+      @if (form.get('placa')?.touched && placaError) {
+        <mat-error>{{ placaError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Fecha y hora a consultar</mat-label>
+      <mat-icon matPrefix>calendar_today</mat-icon>
+      <input
+        matInput
+        type="datetime-local"
+        formControlName="fechaHora"
+        [min]="minFechaHora"
+      />
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        (click)="actualizarHoraActual()"
+        [disabled]="cargando"
+        matTooltip="Actualizar a la hora actual"
+        aria-label="Actualizar hora actual"
+      >
+        <mat-icon>update</mat-icon>
+      </button>
+      <mat-hint>Formato: dd/mm/aaaa hh:mm &mdash; Use el botón <mat-icon style="font-size:14px;vertical-align:middle">update</mat-icon> para poner la hora actual</mat-hint>
+      @if (form.get('fechaHora')?.touched && fechaError) {
+        <mat-error>{{ fechaError }}</mat-error>
+      }
+    </mat-form-field>
+
+    <div class="form-actions">
+      <button
+        mat-raised-button
+        color="primary"
+        type="submit"
+        [disabled]="cargando"
+        class="btn-consultar"
+      >
+        @if (cargando) {
+          <mat-spinner diameter="20" color="accent"></mat-spinner>
+        }
+        @if (!cargando) {
+          <mat-icon>search</mat-icon>
+        }
+        @if (!cargando) { Verificar }
+      </button>
+
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="limpiar()"
+        [disabled]="cargando"
+      >
+        <mat-icon>refresh</mat-icon>
+        Limpiar
+      </button>
+    </div>
+  </form>
+
+  @if (errorMsg) {
+    <div class="error-banner">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ errorMsg }}</span>
+    </div>
+  }
+
+  @if (resultado) {
+    <app-resultado [resultado]="resultado"></app-resultado>
+  }
+</div>

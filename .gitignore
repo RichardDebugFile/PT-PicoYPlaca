@@ -1,0 +1,48 @@
+# ---- Backend (Maven) ----
+backend/target/
+*.class
+*.jar
+
+# ---- Frontend (Node / Angular) ----
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# ---- IDEs ----
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# ---- Eclipse ----
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# ---- NetBeans ----
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Secrets / configuracion local ----
+.env
+*.env.local
+frontend/.env
+# Sobreescrituras locales de Spring (pueden contener credenciales)
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-*.local.properties
+
+# ---- Logs ----
+*.log
+logs/
+backend/logs/

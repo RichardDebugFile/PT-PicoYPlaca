@@ -1,0 +1,87 @@
+.form-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  max-width: 540px;
+  width: 100%;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  .header-icon {
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    color: #1565c0;
+    margin-bottom: 0.5rem;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #1a237e;
+  }
+
+  .subtitle {
+    margin: 0.25rem 0 0;
+    color: #757575;
+    font-size: 0.875rem;
+  }
+
+  .scope-note {
+    margin: 0.5rem 0 0;
+    color: #5c6bc0;
+    font-size: 0.8rem;
+    background: #e8eaf6;
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    display: inline-block;
+  }
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+
+  .btn-consultar {
+    flex: 1;
+    height: 48px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  button {
+    height: 48px;
+  }
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ffebee;
+  border: 1px solid #ef9a9a;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-top: 1.5rem;
+  color: #c62828;
+  font-size: 0.9rem;
+
+  mat-icon {
+    color: #c62828;
+    flex-shrink: 0;
+  }
+}

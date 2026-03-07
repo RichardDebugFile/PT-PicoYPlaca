@@ -1,0 +1,51 @@
+<div class="resultado-card" [ngClass]="colorEstado">
+  <div class="resultado-header">
+    <mat-icon class="estado-icon">{{ iconoEstado }}</mat-icon>
+    <div class="estado-texto">
+      <h3>{{ resultado.puedeCircular ? 'Puede Circular' : 'No Puede Circular' }}</h3>
+      <span class="placa-badge">{{ resultado.placa }}</span>
+    </div>
+  </div>
+
+  <p class="mensaje">{{ resultado.mensaje }}</p>
+
+  <div class="detalles">
+    <div class="detalle-item">
+      <mat-icon>event</mat-icon>
+      <div>
+        <span class="label">Fecha</span>
+        <span class="value">{{ fechaFormateada }}</span>
+      </div>
+    </div>
+
+    <div class="detalle-item">
+      <mat-icon>schedule</mat-icon>
+      <div>
+        <span class="label">Hora</span>
+        <span class="value">{{ horaFormateada }}</span>
+      </div>
+    </div>
+
+    @if (resultado.digitosRestringidosHoy) {
+      <div class="detalle-item">
+        <mat-icon>pin</mat-icon>
+        <div>
+          <span class="label">Dígitos restringidos hoy</span>
+          <span class="value">{{ resultado.digitosRestringidosHoy }}</span>
+        </div>
+      </div>
+    }
+
+    @if (resultado.franjaHorariaRestriccion) {
+      <div class="detalle-item">
+        <mat-icon>access_time</mat-icon>
+        <div>
+          <span class="label">Horario de restricción</span>
+          <span class="value">{{ resultado.franjaHorariaRestriccion }}</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <p class="fuente">Normativa: AMT Quito &mdash; Res. AQ-013-2023</p>
+</div>
