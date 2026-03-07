@@ -1,0 +1,416 @@
+{
+  "info": {
+    "name": "PT-PicoYPlaca API",
+    "description": "Coleccion de pruebas para la API de verificacion de Pico y Placa - Quito, Ecuador (AMT Res. AQ-013-2023).\n\nSelecciona el entorno 'PicoYPlaca - Local Dev' (puerto 4200) o 'PicoYPlaca - Docker' (puerto 80) antes de ejecutar.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Reglas",
+      "item": [
+        {
+          "name": "GET /reglas - Obtener normativa configurada",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/reglas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "reglas"]
+            },
+            "description": "Retorna las reglas de Pico y Placa configuradas: dias, digitos restringidos y franjas horarias."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Verificar - RESTRINGIDO",
+      "item": [
+        {
+          "name": "Lunes 08:00 - Placa termina en 1 (NO circula)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1231\",\n  \"fechaHora\": \"2030-01-07T08:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Lunes 07/01/2030 a las 08:00. Placa termina en 1 (restringido lunes). Franja manana activa. Resultado: NO puede circular."
+          },
+          "response": []
+        },
+        {
+          "name": "Lunes 09:30 - Placa termina en 2 (NO circula, limite exacto)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1232\",\n  \"fechaHora\": \"2030-01-07T09:30:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Lunes a las 09:30 exactas. El limite de la franja manana es inclusivo. Resultado: NO puede circular."
+          },
+          "response": []
+        },
+        {
+          "name": "Lunes 17:00 - Placa termina en 1 (NO circula, franja tarde)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1231\",\n  \"fechaHora\": \"2030-01-07T17:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Lunes 17:00. Franja tarde activa (16:00-20:00). Resultado: NO puede circular."
+          },
+          "response": []
+        },
+        {
+          "name": "Martes 08:00 - Placa termina en 3 (NO circula)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1233\",\n  \"fechaHora\": \"2030-01-08T08:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Martes 08/01/2030. Placa termina en 3 (restringido martes). Resultado: NO puede circular."
+          },
+          "response": []
+        },
+        {
+          "name": "Viernes 06:00 - Placa termina en 0 (NO circula)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1230\",\n  \"fechaHora\": \"2030-01-11T06:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Viernes 11/01/2030 a las 06:00 exactas (limite inicio franja manana, inclusivo). Placa termina en 0 (restringido viernes). Resultado: NO puede circular."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Verificar - PUEDE CIRCULAR",
+      "item": [
+        {
+          "name": "Lunes 12:00 - Placa termina en 1 (SI circula, fuera de franja)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1231\",\n  \"fechaHora\": \"2030-01-07T12:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Lunes al mediodia. El digito esta restringido el dia, pero las 12:00 estan fuera de las franjas (09:30-16:00 es libre). Resultado: SI puede circular."
+          },
+          "response": []
+        },
+        {
+          "name": "Lunes 09:31 - Placa termina en 1 (SI circula, un minuto despues del limite)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1231\",\n  \"fechaHora\": \"2030-01-07T09:31:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Un minuto despues del fin de la franja manana (09:30). Resultado: SI puede circular."
+          },
+          "response": []
+        },
+        {
+          "name": "Lunes 08:00 - Placa termina en 5 (SI circula, digito no restringido)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1235\",\n  \"fechaHora\": \"2030-01-07T08:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Lunes en franja manana pero placa termina en 5 (restringido miercoles, no lunes). Resultado: SI puede circular."
+          },
+          "response": []
+        },
+        {
+          "name": "Sabado 08:00 - Cualquier placa (SI circula, fin de semana)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1231\",\n  \"fechaHora\": \"2030-01-05T08:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Sabado 05/01/2030. Los fines de semana no hay restriccion sin importar la placa ni la hora. Resultado: SI puede circular."
+          },
+          "response": []
+        },
+        {
+          "name": "Domingo 08:00 - Cualquier placa (SI circula, fin de semana)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1230\",\n  \"fechaHora\": \"2030-01-06T08:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Domingo 06/01/2030. Sin restriccion. Resultado: SI puede circular."
+          },
+          "response": []
+        },
+        {
+          "name": "Motocicleta - ABC-123 (SI/NO segun dia y hora)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-123\",\n  \"fechaHora\": \"2030-01-07T08:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Placa de motocicleta formato LLL-NNN (3 digitos). Ultimo digito: 3. Lunes en franja manana: digito 3 no esta restringido el lunes (lunes restringe 1 y 2). Resultado: SI puede circular."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Verificar - ERRORES 400",
+      "item": [
+        {
+          "name": "Placa con formato invalido (400 PLACA_INVALIDA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"AB-1234\",\n  \"fechaHora\": \"2030-01-07T08:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Placa con solo 2 letras (formato no valido en ANT Ecuador). Esperado: 400 con error PLACA_INVALIDA."
+          },
+          "response": []
+        },
+        {
+          "name": "Placa sin guion (400 PLACA_INVALIDA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC1234\",\n  \"fechaHora\": \"2030-01-07T08:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Placa sin guion obligatorio. Esperado: 400 con error PLACA_INVALIDA."
+          },
+          "response": []
+        },
+        {
+          "name": "Fecha anterior a la actual (400 FECHA_ANTERIOR)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1234\",\n  \"fechaHora\": \"2020-01-01T08:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Fecha en el pasado (2020). Esperado: 400 con error FECHA_ANTERIOR."
+          },
+          "response": []
+        },
+        {
+          "name": "Placa vacia (400 VALIDACION_FALLIDA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"\",\n  \"fechaHora\": \"2030-01-07T08:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Placa vacia. Falla la validacion @NotBlank. Esperado: 400 con error VALIDACION_FALLIDA y detalle del campo."
+          },
+          "response": []
+        },
+        {
+          "name": "Body vacio (400 VALIDACION_FALLIDA)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Body sin ninguno de los campos obligatorios. Esperado: 400 con ambos errores de campo."
+          },
+          "response": []
+        },
+        {
+          "name": "Sin Content-Type (415 Unsupported Media Type)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placa\": \"ABC-1234\",\n  \"fechaHora\": \"2030-01-07T08:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "Peticion POST sin cabecera Content-Type: application/json. Esperado: 415."
+          },
+          "response": []
+        },
+        {
+          "name": "Metodo no permitido GET en /verificar (405)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/pico-placa/verificar",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "pico-placa", "verificar"]
+            },
+            "description": "El endpoint /verificar solo acepta POST. Esperado: 405 Method Not Allowed."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "GET /actuator/health (siempre puerto 8080 directo)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/actuator/health",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["actuator", "health"]
+            },
+            "description": "Verifica que el backend esta activo. Retorna {\"status\": \"UP\"}.\n\nIMPORTANTE: Este endpoint NO pasa por Nginx. Siempre apunta directamente al puerto 8080 del backend, independientemente del entorno seleccionado. Si se llama via puerto 80 (Nginx), se recibe el index.html de Angular porque Nginx redirige rutas desconocidas al frontend."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
