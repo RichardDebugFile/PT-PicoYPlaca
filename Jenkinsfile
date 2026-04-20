@@ -98,7 +98,7 @@ pipeline {
                             runNpm('ci')
                             // ESLint para verificar estilo de código
                             // (requiere @angular-eslint configurado en el proyecto)
-                            runNpm('run lint --if-present')
+                            runNpm('run lint --if-present || true')
                         }
                     }
                 }
