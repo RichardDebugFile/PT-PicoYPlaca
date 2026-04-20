@@ -116,11 +116,8 @@ pipeline {
             }
             post {
                 always {
-                    // Publicar reporte de Checkstyle (requiere plugin Warnings Next Generation)
-                    recordIssues(
-                        enabledForFailure: true,
-                        tools: [checkStyle(pattern: 'backend/target/checkstyle-result.xml')]
-                    )
+                    // Archivar el reporte de Checkstyle como artefacto
+                    archiveArtifacts artifacts: 'backend/target/checkstyle-result.xml', allowEmptyArchive: true
                 }
             }
         }
