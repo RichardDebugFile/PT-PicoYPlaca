@@ -11,8 +11,7 @@
 
 
 // ESTRATEGIA 2: Funciones reutilizables
-// Estas funciones se pueden invocar desde cualquier
-// stage, evitando duplicación de código.
+// Estas funciones se pueden invocar desde cualquier stage, evitando duplicación de código.
 def runMaven(String goals) {
     dir('backend') {
         sh "mvn ${goals} --no-transfer-progress"
@@ -27,13 +26,6 @@ def runNpm(String command) {
 
 pipeline {
     agent any
-
-    // Variables de entorno globales
-    environment {
-        JAVA_HOME_TOOL   = 'JDK17'       // Nombre configurado en Jenkins Global Tool Configuration
-        MAVEN_HOME_TOOL  = 'Maven3'       // Nombre configurado en Jenkins Global Tool Configuration
-        NODEJS_HOME_TOOL = 'NodeJS18'     // Nombre configurado en Jenkins Global Tool Configuration
-    }
 
     // Opciones del pipeline
     options {
@@ -53,7 +45,7 @@ pipeline {
     
     stages {
 
-        // --- ETAPA 1: Checkout del código fuente ---
+        // ETAPA 1: Checkout del código fuente
         stage('Checkout') {
             steps {
                 echo "=== Rama actual: ${env.BRANCH_NAME} ==="
