@@ -48,4 +48,3 @@ backend/src/main/resources/application-*.local.properties
 *.log
 logs/
 backend/logs/
-.claude/
