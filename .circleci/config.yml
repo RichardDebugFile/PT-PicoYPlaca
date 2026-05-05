@@ -1,23 +1,5 @@
-# ============================================================================
-# PT-PicoYPlaca - CircleCI Pipeline
-# Traduccion del Jenkinsfile a CircleCI con:
-#   - Multiples jobs y workflows
-#   - Tests en paralelo (parallel jobs + parallelism splitting)
-#   - Notificaciones post (success / failure / always) via Slack orb
-#
-# Variables centralizadas:
-#   - parameters.*           -> versiones de imagenes y cron (parte superior)
-#   - Context "slack-secrets"-> SLACK_ACCESS_TOKEN, SLACK_DEFAULT_CHANNEL
-#                               (definir en CircleCI UI > Org Settings > Contexts)
-#   - YAML anchors           -> reutilizar bloques (context, filtros de rama)
-# ============================================================================
 version: 2.1
 
-# ---------------------------------------------------------------------------
-# PIPELINE PARAMETERS
-# Constantes no-secretas centralizadas. Cambiar aqui afecta todo el pipeline.
-# Para sobreescribir desde la API: trigger con { "parameters": { ... } }.
-# ---------------------------------------------------------------------------
 parameters:
   java_image:
     type: string
@@ -35,11 +17,6 @@ parameters:
     type: integer
     default: 2
 
-# ---------------------------------------------------------------------------
-# YAML ANCHORS (no son sintaxis CircleCI, son YAML estandar).
-# Definidos en una clave custom que CircleCI ignora (`x-anchors`).
-# Se referencian luego con *nombre.
-# ---------------------------------------------------------------------------
 x-anchors:
   slack_context: &slack_ctx
     context: [slack-secrets]
@@ -48,15 +25,9 @@ x-anchors:
       branches:
         only: [main, develop]
 
-# ---------------------------------------------------------------------------
-# ORBS
-# ---------------------------------------------------------------------------
 orbs:
   slack: circleci/slack@4.13.3
 
-# ---------------------------------------------------------------------------
-# EXECUTORS (usan parameters)
-# ---------------------------------------------------------------------------
 executors:
   java-executor:
     docker:
@@ -71,9 +42,6 @@ executors:
       image: << pipeline.parameters.machine_image >>
     working_directory: ~/repo
 
-# ---------------------------------------------------------------------------
-# COMMANDS reutilizables (equivalente a runMaven / runNpm en Jenkinsfile)
-# ---------------------------------------------------------------------------
 commands:
   restore-maven-cache:
     steps:
@@ -103,9 +71,6 @@ commands:
           event: fail
           template: basic_fail_1
 
-# ---------------------------------------------------------------------------
-# JOBS
-# ---------------------------------------------------------------------------
 jobs:
   backend-test:
     executor: java-executor
@@ -265,9 +230,6 @@ jobs:
               ]
             }
 
-# ---------------------------------------------------------------------------
-# WORKFLOWS (usan anchors *slack_ctx y *deploy_filters)
-# ---------------------------------------------------------------------------
 workflows:
   ci-pipeline:
     jobs:
