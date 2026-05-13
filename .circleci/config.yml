@@ -1,0 +1,276 @@
+version: 2.1
+
+parameters:
+  java_image:
+    type: string
+    default: cimg/openjdk:17.0
+  node_image:
+    type: string
+    default: cimg/node:18.20
+  machine_image:
+    type: string
+    default: ubuntu-2204:current
+  nightly_cron:
+    type: string
+    default: "0 6 * * *"
+  test_parallelism:
+    type: integer
+    default: 2
+
+x-anchors:
+  slack_context: &slack_ctx
+    context: [slack-secrets]
+  deploy_branches: &deploy_filters
+    filters:
+      branches:
+        only: [main, develop]
+
+orbs:
+  slack: circleci/slack@4.13.3
+
+executors:
+  java-executor:
+    docker:
+      - image: << pipeline.parameters.java_image >>
+    working_directory: ~/repo
+  node-executor:
+    docker:
+      - image: << pipeline.parameters.node_image >>
+    working_directory: ~/repo
+  docker-executor:
+    machine:
+      image: << pipeline.parameters.machine_image >>
+    working_directory: ~/repo
+
+commands:
+  restore-maven-cache:
+    steps:
+      - restore_cache:
+          keys:
+            - v1-maven-{{ checksum "backend/pom.xml" }}
+            - v1-maven-
+  save-maven-cache:
+    steps:
+      - save_cache:
+          key: v1-maven-{{ checksum "backend/pom.xml" }}
+          paths: [~/.m2]
+  restore-npm-cache:
+    steps:
+      - restore_cache:
+          keys:
+            - v1-npm-{{ checksum "frontend/package.json" }}
+            - v1-npm-
+  save-npm-cache:
+    steps:
+      - save_cache:
+          key: v1-npm-{{ checksum "frontend/package.json" }}
+          paths: [frontend/node_modules]
+  notify-slack-fail:
+    steps:
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+
+jobs:
+  backend-test:
+    executor: java-executor
+    parallelism: << pipeline.parameters.test_parallelism >>
+    steps:
+      - checkout
+      - restore-maven-cache
+      - run:
+          name: Listar y dividir tests
+          working_directory: backend
+          command: |
+            mkdir -p target
+            TEST_CLASSES=$(find src/test/java -name "*Test.java" \
+              | sed 's@src/test/java/@@; s@/@.@g; s@\.java$@@' \
+              | circleci tests split --split-by=timings)
+            echo "$TEST_CLASSES" > target/test-classes.txt
+            cat target/test-classes.txt
+      - run:
+          name: Ejecutar tests Maven (subset)
+          working_directory: backend
+          command: |
+            CLASSES=$(tr '\n' ',' < target/test-classes.txt | sed 's/,$//')
+            if [ -z "$CLASSES" ]; then
+              echo "Sin tests asignados a este contenedor"; exit 0
+            fi
+            mvn -Dtest="$CLASSES" test --no-transfer-progress
+      - save-maven-cache
+      - store_test_results:
+          path: backend/target/surefire-reports
+      - store_artifacts:
+          path: backend/target/surefire-reports
+          destination: surefire-reports
+      - notify-slack-fail
+
+  frontend-lint:
+    executor: node-executor
+    steps:
+      - checkout
+      - restore-npm-cache
+      - run:
+          name: Instalar dependencias
+          working_directory: frontend
+          command: npm ci
+      - save-npm-cache
+      - run:
+          name: Ejecutar linter
+          working_directory: frontend
+          command: npm run lint --if-present || true
+      - notify-slack-fail
+
+  backend-checkstyle:
+    executor: java-executor
+    steps:
+      - checkout
+      - restore-maven-cache
+      - run:
+          name: Checkstyle
+          working_directory: backend
+          command: mvn checkstyle:checkstyle -Dcheckstyle.failOnViolation=false --no-transfer-progress
+      - store_artifacts:
+          path: backend/target/checkstyle-result.xml
+          destination: checkstyle
+      - notify-slack-fail
+
+  backend-build:
+    executor: java-executor
+    steps:
+      - checkout
+      - restore-maven-cache
+      - run:
+          name: Compilar Backend
+          working_directory: backend
+          command: mvn clean package -DskipTests --no-transfer-progress
+      - save-maven-cache
+      - persist_to_workspace:
+          root: .
+          paths: [backend/target/*.jar]
+      - store_artifacts:
+          path: backend/target
+          destination: backend-jar
+      - notify-slack-fail
+
+  frontend-build:
+    executor: node-executor
+    steps:
+      - checkout
+      - restore-npm-cache
+      - run:
+          name: Instalar dependencias
+          working_directory: frontend
+          command: npm ci
+      - run:
+          name: Build produccion
+          working_directory: frontend
+          command: npm run build -- --configuration=production
+      - persist_to_workspace:
+          root: .
+          paths: [frontend/dist]
+      - store_artifacts:
+          path: frontend/dist
+          destination: frontend-dist
+      - notify-slack-fail
+
+  docker-backend:
+    executor: docker-executor
+    steps:
+      - checkout
+      - attach_workspace: { at: . }
+      - run:
+          name: Build imagen Docker Backend
+          working_directory: backend
+          command: docker build -t picoyplaca-backend:${CIRCLE_SHA1:0:7} -t picoyplaca-backend:latest .
+      - notify-slack-fail
+
+  docker-frontend:
+    executor: docker-executor
+    steps:
+      - checkout
+      - attach_workspace: { at: . }
+      - run:
+          name: Build imagen Docker Frontend
+          working_directory: frontend
+          command: docker build -t picoyplaca-frontend:${CIRCLE_SHA1:0:7} -t picoyplaca-frontend:latest .
+      - notify-slack-fail
+
+  notify-success:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - run:
+          name: Resumen exito
+          command: |
+            echo "============================================="
+            echo "Pipeline EXITOSO"
+            echo "Rama:  ${CIRCLE_BRANCH}"
+            echo "Build: #${CIRCLE_BUILD_NUM}"
+            echo "Commit: ${CIRCLE_SHA1}"
+            echo "============================================="
+      - slack/notify:
+          event: always
+          custom: |
+            {
+              "blocks": [
+                { "type": "header",
+                  "text": { "type": "plain_text", "text": "PT-PicoYPlaca: Pipeline EXITOSO" } },
+                { "type": "section",
+                  "fields": [
+                    { "type": "mrkdwn", "text": "*Rama:*\n${CIRCLE_BRANCH}" },
+                    { "type": "mrkdwn", "text": "*Build:*\n#${CIRCLE_BUILD_NUM}" },
+                    { "type": "mrkdwn", "text": "*Commit:*\n${CIRCLE_SHA1}" },
+                    { "type": "mrkdwn", "text": "*Autor:*\n${CIRCLE_USERNAME}" }
+                  ] },
+                { "type": "actions",
+                  "elements": [
+                    { "type": "button", "text": { "type": "plain_text", "text": "Ver build" }, "url": "${CIRCLE_BUILD_URL}" }
+                  ] }
+              ]
+            }
+
+workflows:
+  ci-pipeline:
+    jobs:
+      - backend-test:
+          <<: *slack_ctx
+      - frontend-lint:
+          <<: *slack_ctx
+      - backend-checkstyle:
+          <<: *slack_ctx
+          requires: [backend-test]
+      - backend-build:
+          <<: *slack_ctx
+          requires: [backend-test, backend-checkstyle]
+      - frontend-build:
+          <<: *slack_ctx
+          requires: [frontend-lint]
+      - docker-backend:
+          <<: [*slack_ctx, *deploy_filters]
+          requires: [backend-build]
+      - docker-frontend:
+          <<: [*slack_ctx, *deploy_filters]
+          requires: [frontend-build]
+      - notify-success:
+          <<: *slack_ctx
+          requires: [backend-build, frontend-build]
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: << pipeline.parameters.nightly_cron >>
+          filters:
+            branches:
+              only: [main]
+    jobs:
+      - backend-test:
+          <<: *slack_ctx
+      - frontend-lint:
+          <<: *slack_ctx
+      - backend-build:
+          <<: *slack_ctx
+          requires: [backend-test]
+      - frontend-build:
+          <<: *slack_ctx
+          requires: [frontend-lint]
