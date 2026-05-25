@@ -1,0 +1,3 @@
+NAME                 DESIRED   CURRENT   READY   AGE     CONTAINERS   IMAGES                       SELECTOR
+backend-6d9766bd4b   5         5         5       3m26s   backend      picoyplaca-backend:latest    app=backend,pod-template-hash=6d9766bd4b
+frontend-9696587fc   2         2         2       3m26s   frontend     picoyplaca-frontend:latest   app=frontend,pod-template-hash=9696587fc

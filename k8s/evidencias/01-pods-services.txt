@@ -1,0 +1,23 @@
+NAME                           READY   STATUS    RESTARTS   AGE
+pod/backend-6d9766bd4b-jbdcd   1/1     Running   0          41s
+pod/backend-6d9766bd4b-pjhwb   1/1     Running   0          56s
+pod/backend-6d9766bd4b-pkvkr   1/1     Running   0          3m26s
+pod/backend-6d9766bd4b-t2q5h   1/1     Running   0          56s
+pod/backend-6d9766bd4b-x7vpl   1/1     Running   0          71s
+pod/frontend-9696587fc-5g45m   1/1     Running   0          3m26s
+pod/frontend-9696587fc-c6rpb   1/1     Running   0          3m26s
+
+NAME               TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/backend    ClusterIP   10.99.12.50      <none>        8080/TCP       3m26s
+service/frontend   NodePort    10.102.201.128   <none>        80:30080/TCP   3m26s
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/backend    5/5     5            5           3m26s
+deployment.apps/frontend   2/2     2            2           3m26s
+
+NAME                                 DESIRED   CURRENT   READY   AGE
+replicaset.apps/backend-6d9766bd4b   5         5         5       3m26s
+replicaset.apps/frontend-9696587fc   2         2         2       3m26s
+
+NAME                                              REFERENCE            TARGETS                        MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/backend-hpa   Deployment/backend   cpu: 1%/70%, memory: 47%/80%   2         5         5          3m26s

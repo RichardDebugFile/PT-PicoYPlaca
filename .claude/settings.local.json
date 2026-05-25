@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(circleci config *)",
+      "Bash(python -c \"import yaml,sys; d=yaml.safe_load\\(open\\('.circleci/config.yml',encoding='utf-8'\\)\\); print\\('OK'\\); print\\('jobs:', list\\(d['jobs'].keys\\(\\)\\)\\); print\\('workflows:', list\\(d['workflows'].keys\\(\\)\\)\\)\")"
+    ]
+  }
+}
