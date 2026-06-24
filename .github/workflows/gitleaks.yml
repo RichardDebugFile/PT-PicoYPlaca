@@ -1,0 +1,25 @@
+name: gitleaks
+
+# Escaneo de secretos en cada push, PR y de forma manual.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  scan:
+    name: Escaneo de secretos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (historial completo)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # necesario para escanear todo el historial de git
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+          # GITLEAKS_LICENSE solo es necesario en repos de ORGANIZACION.
+          # En cuentas personales el escaneo es gratuito.

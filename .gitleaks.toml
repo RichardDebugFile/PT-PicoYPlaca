@@ -1,0 +1,23 @@
+# Configuracion de Gitleaks para PT-PicoYPlaca.
+# Extiende el conjunto de reglas por defecto y agrega una allowlist de falsos positivos.
+title = "Gitleaks - PT-PicoYPlaca"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Falsos positivos conocidos: placeholders e identificadores publicos (no son credenciales)."
+
+# Rutas que solo contienen ejemplos/plantillas, nunca secretos reales.
+paths = [
+  '''.*\.example$''',
+  '''.*terraform\.tfvars\.example$''',
+]
+
+# Patrones permitidos.
+regexes = [
+  # ID de subscription de Azure: es un identificador, no una credencial.
+  '''cbb57b72-c964-4415-b85c-e060c5d2fdc2''',
+  # IP publica de ejemplo del lab.
+  '''20\.45\.54\.231''',
+]

@@ -1,0 +1,12 @@
+# Hooks de pre-commit. Instalar una vez:
+#   pip install pre-commit
+#   pre-commit install
+# Luego gitleaks corre automaticamente antes de cada commit.
+# Para actualizar la version:  pre-commit autoupdate
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+        name: Detectar secretos (gitleaks)
+        args: ["--config", ".gitleaks.toml"]
