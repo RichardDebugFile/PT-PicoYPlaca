@@ -34,26 +34,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.DC_DATA }}
-          key: dc-nvd-${{ github.run_id }}
-          restore-keys: dc-nvd-
+          key: dc-nvd-v2-${{ github.run_id }}
+          restore-keys: dc-nvd-v2-
 
-      # El sync completo del NVD tarda ~15-25 min; a veces el NVD responde 503.
-      # Ventana amplia por intento (25 min) para que una descarga sana COMPLETE,
-      # con un reintento por si cae un 503. La cache guarda el resultado para
-      # que las proximas corridas solo bajen el delta (rapidas).
+      # Un solo intento, SIN matar el proceso a media escritura (eso corrompe la
+      # base H2). El sync completo del NVD tarda ~15-25 min; el limite del paso
+      # (40 min) es solo un respaldo. Si completa, la cache (v2) guarda una base
+      # sana y las proximas corridas solo bajan el delta.
       - name: Actualizar base NVD
-        timeout-minutes: 55
+        timeout-minutes: 40
         run: |
-          for i in 1 2; do
-            echo "== Intento de actualizacion NVD #$i =="
-            timeout 1500 mvn -f backend/pom.xml -B --no-transfer-progress \
-              org.owasp:dependency-check-maven:${DC_VERSION}:update-only \
-              -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
-              -DdataDirectory=${DC_DATA} && exit 0
-            echo "Intento #$i fallo o expiro (limite 25 min). Esperando 120s..."
-            sleep 120
-          done
-          echo "No se pudo actualizar la base NVD tras 2 intentos"; exit 1
+          mvn -f backend/pom.xml -B --no-transfer-progress \
+            org.owasp:dependency-check-maven:${DC_VERSION}:update-only \
+            -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
+            -DdataDirectory=${DC_DATA}
 
       # Escaneo usando la base ya descargada (sin volver a tocar el NVD).
       - name: OWASP Dependency-Check (escaneo)
