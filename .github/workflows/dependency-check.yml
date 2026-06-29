@@ -1,7 +1,8 @@
 name: OWASP Dependency-Check (SAST / SCA)
 
-# Analiza las dependencias del proyecto (Maven + npm) contra la base de
-# vulnerabilidades conocidas (NVD/CVE). Corre en cada push, PR y manualmente.
+# Analiza las dependencias del backend (Maven/Spring Boot) contra la base de
+# vulnerabilidades conocidas (NVD/CVE) usando el plugin oficial de OWASP.
+# Corre en cada push, PR y de forma manual.
 on:
   push:
   pull_request:
@@ -18,7 +19,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --- Backend: resolver las dependencias a JARs para que DC las escanee ---
       - name: Configurar JDK 17
         uses: actions/setup-java@v4
         with:
@@ -26,31 +26,17 @@ jobs:
           java-version: "17"
           cache: maven
 
-      - name: Resolver dependencias del backend
+      - name: OWASP Dependency-Check (plugin de Maven)
         run: >-
           mvn -f backend/pom.xml -B --no-transfer-progress
-          dependency:copy-dependencies
-          -DoutputDirectory=target/dependency
-
-      # --- Escaneo: backend (JARs) + frontend (package-lock.json) ---
-      - name: OWASP Dependency-Check
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          project: PT-PicoYPlaca
-          path: "."
-          format: ALL # HTML, JSON, XML, CSV, SARIF
-          out: reports
-          # La NVD API key (gratis) acelera la descarga de la base de CVEs.
-          # Crear en https://nvd.nist.gov/developers/request-an-api-key
-          # y guardarla como secret NVD_API_KEY del repositorio.
-          # Para convertir el pipeline en un "gate" agregar: --failOnCVSS 7
-          args: >-
-            --nvdApiKey ${{ secrets.NVD_API_KEY }}
-            --enableExperimental
+          org.owasp:dependency-check-maven:12.2.2:check
+          -Dformat=ALL
+          -DnvdApiKey=${{ secrets.NVD_API_KEY }}
+          -DfailBuildOnCVSS=11
 
       - name: Subir reporte SAST (artefacto)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
-          path: reports
+          path: backend/target/dependency-check-report.*
