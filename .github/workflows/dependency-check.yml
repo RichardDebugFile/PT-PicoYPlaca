@@ -37,22 +37,23 @@ jobs:
           key: dc-nvd-${{ github.run_id }}
           restore-keys: dc-nvd-
 
-      # La API del NVD a veces responde 503 o deja la conexion colgada.
-      # Cada intento tiene un timeout duro (timeout 720s) para no quedar pegado;
-      # si expira o falla, se reintenta tras una espera.
-      - name: Actualizar base NVD (con reintentos y timeout)
-        timeout-minutes: 50
+      # El sync completo del NVD tarda ~15-25 min; a veces el NVD responde 503.
+      # Ventana amplia por intento (25 min) para que una descarga sana COMPLETE,
+      # con un reintento por si cae un 503. La cache guarda el resultado para
+      # que las proximas corridas solo bajen el delta (rapidas).
+      - name: Actualizar base NVD
+        timeout-minutes: 55
         run: |
-          for i in 1 2 3 4 5; do
+          for i in 1 2; do
             echo "== Intento de actualizacion NVD #$i =="
-            timeout 720 mvn -f backend/pom.xml -B --no-transfer-progress \
+            timeout 1500 mvn -f backend/pom.xml -B --no-transfer-progress \
               org.owasp:dependency-check-maven:${DC_VERSION}:update-only \
               -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
               -DdataDirectory=${DC_DATA} && exit 0
-            echo "Intento #$i fallo o expiro (limite 12 min). Esperando 90s..."
-            sleep 90
+            echo "Intento #$i fallo o expiro (limite 25 min). Esperando 120s..."
+            sleep 120
           done
-          echo "No se pudo actualizar la base NVD tras 5 intentos"; exit 1
+          echo "No se pudo actualizar la base NVD tras 2 intentos"; exit 1
 
       # Escaneo usando la base ya descargada (sin volver a tocar el NVD).
       - name: OWASP Dependency-Check (escaneo)
