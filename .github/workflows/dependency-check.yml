@@ -1,8 +1,7 @@
 name: OWASP Dependency-Check (SAST / SCA)
 
 # Analiza las dependencias del backend (Maven/Spring Boot) contra la base de
-# vulnerabilidades conocidas (NVD/CVE) usando el plugin oficial de OWASP.
-# Corre en cada push, PR y de forma manual.
+# vulnerabilidades conocidas (NVD/CVE) con el plugin oficial de OWASP.
 on:
   push:
   pull_request:
@@ -10,6 +9,10 @@ on:
 
 permissions:
   contents: read
+
+env:
+  DC_VERSION: 12.2.2
+  DC_DATA: /home/runner/.dependency-check-data
 
 jobs:
   depcheck:
@@ -26,12 +29,36 @@ jobs:
           java-version: "17"
           cache: maven
 
-      - name: OWASP Dependency-Check (plugin de Maven)
+      # Cachea la base NVD entre corridas: un solo download completo sirve para siempre.
+      - name: Cache base NVD
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.DC_DATA }}
+          key: dc-nvd-${{ github.run_id }}
+          restore-keys: dc-nvd-
+
+      # La API del NVD a veces responde 503 (saturacion). Reintentar con espera.
+      - name: Actualizar base NVD (con reintentos)
+        run: |
+          for i in 1 2 3 4 5; do
+            echo "== Intento de actualizacion NVD #$i =="
+            mvn -f backend/pom.xml -B --no-transfer-progress \
+              org.owasp:dependency-check-maven:${DC_VERSION}:update-only \
+              -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
+              -DdataDirectory=${DC_DATA} && exit 0
+            echo "NVD fallo (probable 503). Esperando 60s..."
+            sleep 60
+          done
+          echo "No se pudo actualizar la base NVD tras 5 intentos"; exit 1
+
+      # Escaneo usando la base ya descargada (sin volver a tocar el NVD).
+      - name: OWASP Dependency-Check (escaneo)
         run: >-
           mvn -f backend/pom.xml -B --no-transfer-progress
-          org.owasp:dependency-check-maven:12.2.2:check
+          org.owasp:dependency-check-maven:${DC_VERSION}:check
           -Dformat=ALL
-          -DnvdApiKey=${{ secrets.NVD_API_KEY }}
+          -DautoUpdate=false
+          -DdataDirectory=${DC_DATA}
           -DfailBuildOnCVSS=11
 
       - name: Subir reporte SAST (artefacto)
