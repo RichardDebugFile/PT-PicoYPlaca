@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: picoyplaca
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/RichardDebugFile/PT-PicoYPlaca
+    targetRevision: main
+    path: k8s
+    directory:
+      recurse: false
+      include: '{namespace.yaml,backend-deployment.yaml,backend-service.yaml,backend-hpa.yaml,frontend-deployment.yaml,frontend-service.yaml}'
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: picoyplaca
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+
+  revisionHistoryLimit: 5

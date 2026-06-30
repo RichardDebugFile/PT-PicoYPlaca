@@ -1,0 +1,56 @@
+name: Snyk (SAST / SCA)
+
+# Analiza las dependencias del backend (Maven/Spring Boot) contra la base de
+# vulnerabilidades de Snyk. A diferencia de un escaner basado en el NVD, Snyk
+# consulta su propia base via API: rapido y fiable, sin descargas pesadas.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write # para publicar el SARIF en Security > Code scanning
+
+jobs:
+  security:
+    name: Analisis de dependencias (Snyk)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - name: Instalar Snyk CLI
+        run: npm install -g snyk
+
+      # Se corre el CLI nativo (no la Action Docker) para usar el Java/Maven del
+      # runner: evita el choque de JAVA_HOME del contenedor y parsea bien los args.
+      - name: Snyk - escaneo del backend (Maven)
+        continue-on-error: true # no cortar el job si encuentra vulnerabilidades
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: >-
+          snyk test
+          --file=backend/pom.xml
+          --sarif-file-output=snyk-backend.sarif
+
+      - name: Subir reporte SAST (artefacto)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-report
+          path: snyk-backend.sarif
+
+      - name: Publicar hallazgos en Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-backend.sarif
+          category: snyk

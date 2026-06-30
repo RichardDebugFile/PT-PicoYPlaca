@@ -1,0 +1,51 @@
+Name:                   backend
+Namespace:              picoyplaca
+CreationTimestamp:      Mon, 25 May 2026 00:16:19 -0500
+Labels:                 app=backend
+                        tier=api
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=backend
+Replicas:               5 desired | 5 updated | 5 total | 5 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  0 max unavailable, 1 max surge
+Pod Template:
+  Labels:  app=backend
+           tier=api
+  Containers:
+   backend:
+    Image:      picoyplaca-backend:latest
+    Port:       8080/TCP (http)
+    Host Port:  0/TCP (http)
+    Limits:
+      cpu:     500m
+      memory:  512Mi
+    Requests:
+      cpu:      200m
+      memory:   256Mi
+    Liveness:   http-get http://:8080/actuator/health delay=30s timeout=10s period=30s #success=1 #failure=3
+    Readiness:  http-get http://:8080/actuator/health delay=15s timeout=5s period=10s #success=1 #failure=3
+    Environment:
+      SPRING_PROFILES_ACTIVE:  prod
+      CORS_ALLOWED_ORIGINS:    http://localhost,http://frontend
+      TZ:                      America/Guayaquil
+    Mounts:                    <none>
+  Volumes:                     <none>
+  Node-Selectors:              <none>
+  Tolerations:                 <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Progressing    True    NewReplicaSetAvailable
+  Available      True    MinimumReplicasAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   backend-6d9766bd4b (5/5 replicas created)
+Events:
+  Type    Reason             Age    From                   Message
+  ----    ------             ----   ----                   -------
+  Normal  ScalingReplicaSet  3m26s  deployment-controller  Scaled up replica set backend-6d9766bd4b from 0 to 2
+  Normal  ScalingReplicaSet  2m31s  deployment-controller  Scaled up replica set backend-6d9766bd4b from 2 to 5
+  Normal  ScalingReplicaSet  79s    deployment-controller  Scaled down replica set backend-6d9766bd4b from 5 to 1
+  Normal  ScalingReplicaSet  71s    deployment-controller  Scaled up replica set backend-6d9766bd4b from 1 to 2
+  Normal  ScalingReplicaSet  56s    deployment-controller  Scaled up replica set backend-6d9766bd4b from 2 to 4
+  Normal  ScalingReplicaSet  41s    deployment-controller  Scaled up replica set backend-6d9766bd4b from 4 to 5
