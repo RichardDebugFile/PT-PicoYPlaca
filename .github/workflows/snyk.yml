@@ -26,16 +26,19 @@ jobs:
           java-version: "17"
           cache: maven
 
+      - name: Instalar Snyk CLI
+        run: npm install -g snyk
+
+      # Se corre el CLI nativo (no la Action Docker) para usar el Java/Maven del
+      # runner: evita el choque de JAVA_HOME del contenedor y parsea bien los args.
       - name: Snyk - escaneo del backend (Maven)
-        uses: snyk/actions/maven@master
         continue-on-error: true # no cortar el job si encuentra vulnerabilidades
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: test
-          args: >-
-            --file=backend/pom.xml
-            --sarif-file-output=snyk-backend.sarif
+        run: >-
+          snyk test
+          --file=backend/pom.xml
+          --sarif-file-output=snyk-backend.sarif
 
       - name: Subir reporte SAST (artefacto)
         if: always()
