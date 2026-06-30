@@ -37,17 +37,23 @@ jobs:
           key: dc-nvd-v2-${{ github.run_id }}
           restore-keys: dc-nvd-v2-
 
-      # Un solo intento, SIN matar el proceso a media escritura (eso corrompe la
-      # base H2). El sync completo del NVD tarda ~15-25 min; el limite del paso
-      # (40 min) es solo un respaldo. Si completa, la cache (v2) guarda una base
-      # sana y las proximas corridas solo bajan el delta.
+      # Reintentos SIN matar el proceso: ante un 503 del NVD, mvn termina por su
+      # cuenta (sin corromper la base H2), y reintentamos tras una espera. El
+      # limite del paso (90 min) solo corta un cuelgue real. Cuando el NVD da una
+      # ventana limpia, el sync completa y la cache (v2) lo guarda para siempre.
       - name: Actualizar base NVD
-        timeout-minutes: 40
+        timeout-minutes: 90
         run: |
-          mvn -f backend/pom.xml -B --no-transfer-progress \
-            org.owasp:dependency-check-maven:${DC_VERSION}:update-only \
-            -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
-            -DdataDirectory=${DC_DATA}
+          for i in 1 2 3 4 5 6; do
+            echo "== Intento de actualizacion NVD #$i =="
+            mvn -f backend/pom.xml -B --no-transfer-progress \
+              org.owasp:dependency-check-maven:${DC_VERSION}:update-only \
+              -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
+              -DdataDirectory=${DC_DATA} && exit 0
+            echo "Intento #$i fallo (probable 503 del NVD). Esperando 120s..."
+            sleep 120
+          done
+          echo "El NVD no dio una ventana estable tras 6 intentos"; exit 1
 
       # Escaneo usando la base ya descargada (sin volver a tocar el NVD).
       - name: OWASP Dependency-Check (escaneo)
