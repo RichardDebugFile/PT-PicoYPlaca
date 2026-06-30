@@ -37,6 +37,7 @@ Se ejecuta en cada `push`, `pull_request` y manualmente. Pasos:
 2. Instala el **CLI de Snyk** (`npm install -g snyk`).
 3. Ejecuta `snyk test --file=backend/pom.xml --sarif-file-output=snyk-backend.sarif`.
 4. Publica el reporte **SARIF** como **artefacto** (`snyk-report`).
+5. Publica los hallazgos en **Security → Code scanning** de GitHub.
 
 Autenticación mediante el secret `SNYK_TOKEN` (token de la cuenta gratuita de Snyk).
 
@@ -67,7 +68,7 @@ hallazgos (ubicación, identificador SNYK/CVE, severidad y versión que corrige)
 
 ## 5. Evidencias
 
-> Insertar 3 capturas en `docs/capturas/` con estos nombres.
+> Insertar 5 capturas en `docs/capturas/` con estos nombres.
 
 ### 5.1 Repositorio público
 ![Repositorio público](capturas/01-repo-publico.png)
@@ -81,6 +82,15 @@ hallazgos (ubicación, identificador SNYK/CVE, severidad y versión que corrige)
 ### 5.3 Reporte SAST como artefacto
 ![Artefacto snyk-report](capturas/03-artefacto.png)
 *La sección **Artifacts** de la corrida con el reporte `snyk-report` descargable.*
+
+### 5.4 Workflow de integración en el pipeline
+![Workflow snyk.yml](capturas/04-workflow.png)
+*El archivo `.github/workflows/snyk.yml` que integra Snyk en el pipeline de CI.*
+
+### 5.5 Hallazgos en GitHub Security (Code Scanning)
+![Code Scanning con los hallazgos de Snyk](capturas/05-code-scanning.png)
+*Las **89 alertas** de Snyk publicadas en la pestaña **Security → Code scanning**,
+clasificadas por severidad (Critical/High/Medium/Low).*
 
 ## 6. Conclusiones
 
