@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write # para publicar el SARIF en Security > Code scanning
 
 jobs:
   security:
@@ -46,3 +47,10 @@ jobs:
         with:
           name: snyk-report
           path: snyk-backend.sarif
+
+      - name: Publicar hallazgos en Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-backend.sarif
+          category: snyk
