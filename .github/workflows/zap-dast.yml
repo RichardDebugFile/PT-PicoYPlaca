@@ -1,0 +1,58 @@
+name: OWASP ZAP (DAST)
+
+# Analisis dinamico de seguridad (DAST): levanta la aplicacion real con
+# docker compose y ejecuta un escaneo baseline de OWASP ZAP contra el
+# frontend en ejecucion. Complementa al SAST (Snyk) probando la app viva.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dast:
+    name: Analisis dinamico (DAST)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Levantar la aplicacion (docker compose)
+        run: |
+          docker compose up -d --build
+          docker compose ps
+
+      - name: Esperar a que el frontend responda
+        run: |
+          for i in $(seq 1 40); do
+            if curl -sf http://localhost:80 >/dev/null; then
+              echo "Frontend arriba"; exit 0
+            fi
+            echo "Esperando al frontend... ($i/40)"; sleep 6
+          done
+          echo "El frontend no respondio a tiempo"; docker compose logs; exit 1
+
+      - name: OWASP ZAP Baseline Scan
+        run: |
+          docker run --network host \
+            -v ${{ github.workspace }}:/zap/wrk/:rw \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://localhost:80 \
+            -r zap-report.html -J zap-report.json -w zap-report.md \
+            || true
+
+      - name: Subir reporte DAST (artefacto)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-dast-report
+          path: |
+            zap-report.html
+            zap-report.json
+            zap-report.md
+
+      - name: Apagar la aplicacion
+        if: always()
+        run: docker compose down -v || true
