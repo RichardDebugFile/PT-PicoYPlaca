@@ -1,0 +1,45 @@
+name: Trivy (politica y configuracion)
+
+# Validacion de politicas de seguridad: Trivy revisa las configuraciones de
+# infraestructura (Dockerfiles, manifiestos de Kubernetes, IaC) en busca de
+# malas practicas y errores de configuracion (misconfigurations).
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write # para publicar en Security > Code scanning
+
+jobs:
+  config-scan:
+    name: Validacion de politicas (IaC / k8s / Docker)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trivy - escaneo de configuracion (misconfig)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: .
+          format: sarif
+          output: trivy-config.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+          exit-code: "0" # no cortar el job; el reporte es la evidencia
+
+      - name: Publicar hallazgos en Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-config.sarif
+          category: trivy-config
+
+      - name: Subir reporte de politicas (artefacto)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-config-report
+          path: trivy-config.sarif
