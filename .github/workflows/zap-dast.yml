@@ -36,22 +36,22 @@ jobs:
 
       - name: OWASP ZAP Baseline Scan
         run: |
+          # Carpeta escribible por el contenedor de ZAP (corre con otro uid).
+          mkdir -p zap-out && chmod 777 zap-out
           docker run --network host \
-            -v ${{ github.workspace }}:/zap/wrk/:rw \
+            -v ${{ github.workspace }}/zap-out:/zap/wrk/:rw \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py -t http://localhost:80 \
             -r zap-report.html -J zap-report.json -w zap-report.md \
             || true
+          ls -la zap-out/
 
       - name: Subir reporte DAST (artefacto)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: zap-dast-report
-          path: |
-            zap-report.html
-            zap-report.json
-            zap-report.md
+          path: zap-out/zap-report.*
 
       - name: Apagar la aplicacion
         if: always()
